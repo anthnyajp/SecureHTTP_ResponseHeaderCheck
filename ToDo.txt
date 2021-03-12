@@ -1,0 +1,4 @@
+Resolve issue with Get-UrlRedirection
+Include final IP address in output
+Check final URL for any "http" links within the HTML source
+
