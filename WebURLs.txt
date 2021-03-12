@@ -1,0 +1,10 @@
+http://reddit.com
+http://facebook.com
+https://www.google.com
+http://linkedin.com
+https://www.twitter.com
+https://owasp.org
+http://stackoverflow.com
+http://github.com
+http://developer.mozilla.org
+http://instagram.com
