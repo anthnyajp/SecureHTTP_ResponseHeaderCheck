@@ -1,4 +1,4 @@
-﻿#-------------
+#-------------
 # Script to loop over a list of URLs, make a HTTP HEAD request and check for (first) 200 response
 #   INPUT: A txt file with one URL per line
 #   
@@ -8,30 +8,46 @@
 #               - Error = Error message (for 404 or 500 errors)
 #
 
+add-type @"
+    using System.Net;
+    using System.Security.Cryptography.X509Certificates;
+    public class TrustAllCertsPolicy : ICertificatePolicy {
+        public bool CheckValidationResult(
+            ServicePoint srvPoint, X509Certificate certificate,
+            WebRequest request, int certificateProblem) {
+            return true;
+        }
+    }
+"@
+[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+
+$Date= ((Get-Date).ToString("yyyyMMdd_HHmmss"))
+
 $linksFilePath = "C:\Downloads\WebURLs.txt"
-$outCSVPath = "C:\Downloads\TestURLexport2.csv"
+$outCSVPath = "C:\Downloads\URL_Header_Checker_Export_"+$Date+".csv"
 
 get-content $linksFilePath |
  Foreach { $uril = $_; try 
     { 
-        Invoke-WebRequest -Uri $uril -Method HEAD -MaximumRedirection 10 -ErrorAction SilentlyContinue -UseBasicParsing
-        $Final = [System.Net.HttpWebRequest]::Create($uril).GetResponse().ResponseUri.AbsoluteUri
-        $Redirect = IF ($uril -eq $Final) {$Final} 
-            Else{Get-UrlRedirection -Enumerate $uril}
+        Invoke-WebRequest -Uri $uril -Method GET -MaximumRedirection 10 -ErrorAction SilentlyContinue -UseBasicParsing
+        #$Final = [System.Net.HttpWebRequest]::Create($uril).GetResponse().ResponseUri.AbsoluteUri
+        #$Redirect = IF ($uril -eq $Final) {$Final} 
+           # Else{Get-UrlRedirection -Enumerate $uril}
     } 
         catch 
         { 
             New-Object -TypeName psobject -Property @{ Error = $_ } 
         } 
     } |
- Select @{Name="RequestURI";Expression={$uril}}, StatusCode, @{Name="FinalURL";Expression={$Final}}, @{Name="RedirectPattern";Expression={$Redirect}}, Error , @{Name="Server";Expression={$_.Headers["Server"]}} , @{Name="CSP";Expression={$_.Headers["Content-Security-Policy"]}}  ,@{Name="X-Content-Type-Options";Expression={$_.Headers["X-Content-Type-Options"]}} , @{Name="Strict-Transport-Security";Expression={$_.Headers["Strict-Transport-Security"]}} , @{Name="Cache-Control";Expression={$_.Headers["Cache-Control"]}} , @{Name="Set-Cookie";Expression={$_.Headers["Set-Cookie"]}} , @{Name="Expires";Expression={$_.Headers["Expires"]}} , @{Name="X-XSS-Protection";Expression={$_.Headers["X-XSS-Protection"]}} , @{Name="X-Frame-Options";Expression={$_.Headers["X-Frame-Options"]}} , @{Name="Referrer-Policy";Expression={$_.Headers["Referrer-Policy"]}} , @{Name="Clear-Site-Data";Expression={$_.Headers["Clear-Site-Data"]}} , @{Name="Feature-Policy";Expression={$_.Headers["Feature-Policy"]}} , @{Name="Expect-CT";Expression={$_.Headers["Expect-CT"]}} , @{Name="X-Permitted-Cross-Domain-Policies";Expression={$_.Headers["X-Permitted-Cross-Domain-Policies"]}} , @{Name="Cross-Origin-Embedder-Policy";Expression={$_.Headers["Cross-Origin-Embedder-Policy"]}} , @{Name="Cross-Origin-Opener-Policy";Expression={$_.Headers["Cross-Origin-Opener-Policy"]}} , @{Name="Cross-Origin-Resource-Policy";Expression={$_.Headers["Cross-Origin-Resource-Policy"]}}|
+ Select @{Name="RequestURI";Expression={$uril}}, StatusCode, @{Name="Location";Expression={$Location}}, Error , @{Name="Server";Expression={$_.Headers["Server"]}} , @{Name="CSP";Expression={$_.Headers["Content-Security-Policy"]}}  ,@{Name="X-Content-Type-Options";Expression={$_.Headers["X-Content-Type-Options"]}} , @{Name="Strict-Transport-Security";Expression={$_.Headers["Strict-Transport-Security"]}} , @{Name="Cache-Control";Expression={$_.Headers["Cache-Control"]}} , @{Name="Set-Cookie";Expression={$_.Headers["Set-Cookie"]}} , @{Name="Expires";Expression={$_.Headers["Expires"]}} , @{Name="X-XSS-Protection";Expression={$_.Headers["X-XSS-Protection"]}} , @{Name="X-Frame-Options";Expression={$_.Headers["X-Frame-Options"]}} , @{Name="Referrer-Policy";Expression={$_.Headers["Referrer-Policy"]}} , @{Name="Clear-Site-Data";Expression={$_.Headers["Clear-Site-Data"]}} , @{Name="Feature-Policy";Expression={$_.Headers["Feature-Policy"]}} , @{Name="Expect-CT";Expression={$_.Headers["Expect-CT"]}} , @{Name="X-Permitted-Cross-Domain-Policies";Expression={$_.Headers["X-Permitted-Cross-Domain-Policies"]}} , @{Name="Cross-Origin-Embedder-Policy";Expression={$_.Headers["Cross-Origin-Embedder-Policy"]}} , @{Name="Cross-Origin-Opener-Policy";Expression={$_.Headers["Cross-Origin-Opener-Policy"]}} , @{Name="Cross-Origin-Resource-Policy";Expression={$_.Headers["Cross-Origin-Resource-Policy"]}}|
  Export-Csv $outCSVPath
 
 
  ## --- URL Redirections FUNCTION -- ####
 
- 
- 
+  
+<#  ## Currently Not working ##
+
 Function Get-UrlRedirection {
   [CmdletBinding()]
   Param (
@@ -122,3 +138,4 @@ Function Get-UrlRedirection {
   } # process
 
 }
+#>
