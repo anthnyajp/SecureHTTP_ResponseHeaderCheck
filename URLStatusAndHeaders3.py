@@ -22,12 +22,12 @@ output_file_path = "/home/anthonyp/Documents/Scripts/Python/URLStatusAndHeaders/
 with open(input_file_path, "r") as input_file, open(output_file_path, "w", newline="") as output_file:
     csv_writer = csv.writer(output_file)
     csv_writer.writerow(["ID","URL","Initial Full Host" , "Status Code", "Status Description", "Final URL", "Final Full Host" ,"Same?" ,"Redirect", "scheme" ,"hostname" , "port" , "http_version", "Server", "Content Type", "Content Length",  "Content-Security-Policy","X-Content-Type-Options", "Strict-Transport-Security", "Cache-Control", "Expires", "Set-Cookie","X-XSS-Protection", "X-Frame-Options",  "access_control_allow_origin", "referrer_policy", "permissions_policy", "clear_site_data", "feature_policy", "expect_ct", "x_permitted_cross_domain_policies", "cross_origin_embedder_policy", "cross_origin_opener_policy", "cross_origin_resource_policy", "x_powered_by", "ProtocolVersion", "Insecure Redirects", "HTTP Links"])
-  
+
     # Iterate through the input file
     for url in input_file:
         # Clean up the URL
         url = url.strip()
-        
+
         try:
             # Clear variables
             statuscode = ""
@@ -77,24 +77,24 @@ with open(input_file_path, "r") as input_file, open(output_file_path, "w", newli
             Fullhostname1 = ""
             port1 = ""
             same = ""
-            
+
             #get URL hostname and referrer to send in request header
             parsed_url = urlparse(url)
             stripped_url = parsed_url.netloc
             referrer = parsed_url.scheme + "://" + parsed_url.netloc
-            
+
             #Set request headers 
             headers = {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36",
                 "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
                 "Accept-Encoding":"gzip, deflate, br",
-                "Cache-Control":"no-cache",
+                "Cache-Control":"no-cache, no-store, max-age=0, must-revalidate",
                 "Accept-Language":"en-US,en;q=0.9",
                 "Connection":"keep-alive",
                 "Pragma":"no-cache",
                 "Sec-Ch-Ua-Platform":"Windows",
                 "sec-ch-ua-mobile": "?0",
-                "sec-ch-ua":'"Google Chrome";v="113","Chromium";v="113","Not:A-Brand";v="24"',
+                "sec-ch-ua":'Google Chrome;v="113", Chromium;v="113", Not A Brand;v="24"',
                 "Sec-Fetch-Dest":"document",
                 "Sec-Fetch-Mode":"navigate",
                 "Sec-Fetch-Site":"none",
@@ -103,10 +103,10 @@ with open(input_file_path, "r") as input_file, open(output_file_path, "w", newli
                 "Referer": referrer,
                 "host": stripped_url
                 }
-            
+
             # Make a GET request to the URL with SSL validation disabled
             response = requests.get(url, verify=False, allow_redirects=True,headers = headers ,timeout=20)#stream=True
-                        
+
             # Get the status code and response headers
             url =url
             statuscode = response.status_code
@@ -138,21 +138,21 @@ with open(input_file_path, "r") as input_file, open(output_file_path, "w", newli
             protocol_version = response.headers.get('ProtocolVersion', "Missing")
             insecure_redirects = False
             http_links = False
-            
+
             #Parse the final URL string
             parsed_uri = urlparse(final_url, scheme='', allow_fragments=True)
             scheme = parsed_uri.scheme
             hostname = parsed_uri.hostname
             Fullhostname = parsed_uri.scheme + "://" + parsed_uri.hostname
             port = parsed_uri.port
-            
+
             #Parse initial URL string
             parsed_uriInitial = urlparse(url, scheme='', allow_fragments=True)
             scheme1 = parsed_uriInitial.scheme
             hostname1 = parsed_uriInitial.hostname
             Fullhostname1 = parsed_uriInitial.scheme + "://" + parsed_uriInitial.hostname
             port1 = parsed_uriInitial.port
-            
+
             http_version = response.raw.version
             #ssl_context = ssl.TLSVersion.name
 
@@ -161,7 +161,7 @@ with open(input_file_path, "r") as input_file, open(output_file_path, "w", newli
                 same = "True"
             else:
                 same = "False"
-                          
+   
 
             # Check for insecure redirects
             for resp in response.history:
@@ -174,18 +174,18 @@ with open(input_file_path, "r") as input_file, open(output_file_path, "w", newli
                 response = requests.get(final_url, verify=False)
                 if 'http:' in response.text:
                     http_links = True
-                        
+
             # Write the results to the output file
             count = count + 1
             csv_writer.writerow([count,url,Fullhostname1, statuscode, status_description, final_url,Fullhostname,same,history,scheme , hostname , port , http_version, server, content_type, content_length, csp, x_content_type_options, strict_transport_security, cache_control, expires, set_cookie, x_xss_protection, x_frame_options, access_control_allow_origin, referrer_policy, permissions_policy, clear_site_data, feature_policy, expect_ct, x_permitted_cross_domain_policies, cross_origin_embedder_policy, cross_origin_opener_policy, cross_origin_resource_policy, x_powered_by, protocol_version, insecure_redirects, http_links])
-                        
+          
             print(count)       
         except Exception as e:
             count = count + 1
             # If there is an error, write the URL and error message to the output file
             csv_writer.writerow([count,url,"N/A",str(e), "N/A","N/A","N/A", "N/A","N/A", "N/A", "N/A","N/A","N/A", "N/A", "N/A", "N/A","N/A", "N/A", "N/A", "N/A","N/A", "N/A", "N/A", "N/A","N/A","N/A", "N/A", "N/A", "N/A","N/A", "N/A", "N/A", "N/A","N/A", "N/A", "N/A", "N/A","N/A"])
-                       
+       
             print(count,' Exception')
-            
+
 print("Complete.. ",count," records checked.")
 print("It took this long to complete: ",datetime.datetime.now() - startTime)
