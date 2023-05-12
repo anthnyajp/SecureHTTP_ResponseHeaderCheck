@@ -18,6 +18,7 @@ date = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 input_file_path = "/home/anthonyp/Documents/Scripts/Python/URLStatusAndHeaders/WebURLs.txt"
 output_file_path = "/home/anthonyp/Documents/Scripts/Python/URLStatusAndHeaders/URL_Header_Checker_Export_" + date + ".csv"
 
+# Write column headers in CSV
 with open(input_file_path, "r") as input_file, open(output_file_path, "w", newline="") as output_file:
     csv_writer = csv.writer(output_file)
     csv_writer.writerow(["ID","URL","Initial Full Host" , "Status Code", "Status Description", "Final URL", "Final Full Host" ,"Same?" ,"Redirect", "scheme" ,"hostname" , "port" , "http_version", "Server", "Content Type", "Content Length",  "Content-Security-Policy","X-Content-Type-Options", "Strict-Transport-Security", "Cache-Control", "Expires", "Set-Cookie","X-XSS-Protection", "X-Frame-Options",  "access_control_allow_origin", "referrer_policy", "permissions_policy", "clear_site_data", "feature_policy", "expect_ct", "x_permitted_cross_domain_policies", "cross_origin_embedder_policy", "cross_origin_opener_policy", "cross_origin_resource_policy", "x_powered_by", "ProtocolVersion", "Insecure Redirects", "HTTP Links"])
@@ -64,7 +65,9 @@ with open(input_file_path, "r") as input_file, open(output_file_path, "w", newli
             port = ""
             http_version = ""
             Fullhostname = ""
-            
+            e = ""
+            stripped_url = ""
+            parsed_url = ""
             #ssl_context = ""
             insecure_redirects = ""
             http_links = ""
@@ -75,9 +78,34 @@ with open(input_file_path, "r") as input_file, open(output_file_path, "w", newli
             port1 = ""
             same = ""
             
+            #get URL hostname and referrer to send in request header
+            parsed_url = urlparse(url)
+            stripped_url = parsed_url.netloc
+            referrer = parsed_url.scheme + "://" + parsed_url.netloc
+            
+            #Set request headers 
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36",
+                "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                "Accept-Encoding":"gzip, deflate, br",
+                "Cache-Control":"no-cache",
+                "Accept-Language":"en-US,en;q=0.9",
+                "Connection":"keep-alive",
+                "Pragma":"no-cache",
+                "Sec-Ch-Ua-Platform":"Windows",
+                "sec-ch-ua-mobile": "?0",
+                "sec-ch-ua":'"Google Chrome";v="113","Chromium";v="113","Not:A-Brand";v="24"',
+                "Sec-Fetch-Dest":"document",
+                "Sec-Fetch-Mode":"navigate",
+                "Sec-Fetch-Site":"none",
+                "Sec-Fetch-User": "?1",
+                "Upgrade-Insecure-Requests": "1",
+                "Referer": referrer,
+                "host": stripped_url
+                }
             
             # Make a GET request to the URL with SSL validation disabled
-            response = requests.get(url, verify=False, allow_redirects=True,headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36','accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.9,application/signed-exchange;v=b3;q=0.7','accept-encoding':'gzip,deflate,br'} ,timeout=20)#stream=True
+            response = requests.get(url, verify=False, allow_redirects=True,headers = headers ,timeout=20)#stream=True
                         
             # Get the status code and response headers
             url =url
@@ -111,7 +139,7 @@ with open(input_file_path, "r") as input_file, open(output_file_path, "w", newli
             insecure_redirects = False
             http_links = False
             
-            #Parse the findl URL string
+            #Parse the final URL string
             parsed_uri = urlparse(final_url, scheme='', allow_fragments=True)
             scheme = parsed_uri.scheme
             hostname = parsed_uri.hostname
@@ -128,6 +156,7 @@ with open(input_file_path, "r") as input_file, open(output_file_path, "w", newli
             http_version = response.raw.version
             #ssl_context = ssl.TLSVersion.name
 
+            #Check if the inital host name is the same as the final host name
             if Fullhostname1 == Fullhostname:
                 same = "True"
             else:
